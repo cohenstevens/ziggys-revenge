@@ -2,6 +2,7 @@ import sys
 import pygame
 import random
 import math
+import os
 from scripts.entities import PhysicsEntity, Player, Enemy
 from scripts.utils import load_image, load_images, Animation
 from scripts.tilemap import Tilemap
@@ -14,9 +15,10 @@ class Game:
     def __init__(self):
         pygame.init()
 
-        pygame.display.set_caption("ninja go")
+        pygame.display.set_caption("Ziggy's Revenge")
         self.screen = pygame.display.set_mode((640, 480)) # creates display window
-        self.display = pygame.Surface((320, 240)) # render onto this. basically loads in a plain image at set size, which is half of display in this scenario
+        self.display = pygame.Surface((320, 240) , pygame.SRCALPHA) # render onto this. basically loads in a plain image at set size, which is half of display in this scenario
+        self.display_2 = pygame.Surface((320, 240))
 
         self.clock = pygame.time.Clock()
 
@@ -43,12 +45,30 @@ class Game:
             'projectile': load_image('projectile.png'),
         }
 
+        self.sfx = {
+            'jump': pygame.mixer.Sound('data/sfx/jump.wav'),
+            'dash': pygame.mixer.Sound('data/sfx/dash.wav'),
+            'hit': pygame.mixer.Sound('data/sfx/hit.wav'),
+            'shoot': pygame.mixer.Sound('data/sfx/shoot.wav'),
+            'ambience': pygame.mixer.Sound('data/sfx/ambience.wav'),
+        }
+
+        self.sfx['ambience'].set_volume(0.2)
+        self.sfx['shoot'].set_volume(0.4)
+        self.sfx['hit'].set_volume(0.8)
+        self.sfx['dash'].set_volume(0.3)
+        self.sfx['jump'].set_volume(0.7)
+
         self.clouds = Clouds(self.assets['clouds'], count=16)
 
         self.player = Player(self, (50, 50), (8,15))
 
         self.tilemap = Tilemap(self, tile_size=16)
-        self.load_level(0)
+
+        self.level = 0
+        self.load_level(self.level)
+
+        self.screenshake = 0
 
 
     def load_level(self, map_id):
@@ -63,6 +83,7 @@ class Game:
         for spawner in self.tilemap.extract([('spawners', 0), ('spawners', 1)]):
             if spawner['variant'] == 0: # variant 1 of spanwes is player
                 self.player.pos = spawner['pos']
+                self.player.air_time = 0
             else:
                 self.enemies.append(Enemy(self, spawner['pos'], (8,15)))
 
@@ -71,10 +92,37 @@ class Game:
         self.sparks = []
 
         self.scroll = [0,0] # coordinates are top left of screen
+        self.dead = 0
+        self.transition = -30
 
     def run(self):
+        pygame.mixer.music.load('data/music.wav') # wav files seems to be better with executables
+        pygame.mixer.music.set_volume(0.5)
+        pygame.mixer.music.play(-1) # takes a number of loops, -1 loops forever
+
+        self.sfx['ambience'].play(-1)
+
         while True:
-            self.display.blit(self.assets['background'], (0,0))
+            self.display.fill((0, 0, 0, 0))
+            self.display_2.blit(self.assets['background'], (0,0))
+
+            self.screenshake = max(0, self.screenshake - 1)
+
+            if not len(self.enemies):
+                self.transition += 1
+                if self.transition > 30:
+                    self.level = min(self.level + 1, len(os.listdir('data/maps')) - 1) # will prevent from crashing if go above amount of maps
+                    self.load_level(self.level)
+            if self.transition < 0:
+                self.transition += 1
+
+
+            if self.dead >= 2:
+                self.dead += 1
+                if self.dead >= 10:
+                    self.transition = min(30, self.transition + 1) # want transition to go to highest number without level transition
+                if self.dead > 40: # causes a 40 frame wait time till level restart
+                    self.load_level(self.level)
 
             self.scroll[0] += (self.player.rect().centerx - self.display.get_width() / 2 - self.scroll[0]) / 30 # without subtracting the character would be in the top left of the screen
             self.scroll[1] += (self.player.rect().centery - self.display.get_width() / 2 - self.scroll[1]) / 30 # further player is faster scroll will move bc of /30
@@ -87,16 +135,19 @@ class Game:
 
 
             self.clouds.update()
-            self.clouds.render(self.display, offset=render_scroll)
+            self.clouds.render(self.display_2, offset=render_scroll)
 
             self.tilemap.render(self.display, offset=render_scroll)
 
             for enemy in self.enemies.copy():
-                enemy.update(self.tilemap, (0,0))
+                kill = enemy.update(self.tilemap, (0,0))
                 enemy.render(self.display, offset=render_scroll)
+                if kill:
+                    self.enemies.remove(enemy)
 
-            self.player.update(self.tilemap, (self.movement[1] - self.movement[0], 0))
-            self.player.render(self.display, offset=render_scroll)
+            if self.dead <= 2:
+                self.player.update(self.tilemap, (self.movement[1] - self.movement[0], 0))
+                self.player.render(self.display, offset=render_scroll)
 
             #[[x, y], direction, timer]
             for projectile in self.projectiles.copy(): # have to copy if removing from list otherwise runtime error
@@ -107,12 +158,15 @@ class Game:
                 if self.tilemap.solid_check(projectile[0]): # checking location of projectile
                     self.projectiles.remove(projectile)
                     for i in range(4):
-                        self.sparks.append(Spark(self.projectiles[0], random.random() - 0.5 + (math.pi if projectile[1] > 0 else 0), 2 + random.random())) # shoot sparks left only if projectile is going right
+                        self.sparks.append(Spark(projectile[0], random.random() - 0.5 + (math.pi if projectile[1] > 0 else 0), 2 + random.random())) # shoot sparks left only if projectile is going right
                 elif projectile[2] > 360:
                     self.projectiles.remove(projectile)
                 elif abs(self.player.dashing) < 50: # as long as you arent in the moving part of dash
                     if self.player.rect().collidepoint(projectile[0]):
                         self.projectiles.remove(projectile)
+                        self.dead += 1
+                        self.sfx['hit'].play()
+                        self.screenshake = max(16, self.screenshake)
                         for i in range(30):
                             angle = random.random() * math.pi * 2
                             speed = random.random() * 5
@@ -125,6 +179,11 @@ class Game:
                 if kill:
                     self.sparks.remove(spark)
 
+            display_mask = pygame.mask.from_surface(self.display)
+            display_silhouette = display_mask.to_surface(setcolor=(0 ,0, 0, 180), unsetcolor=(0, 0, 0, 0)) # (red, green, blue, alpha(transparency)) 0 is fully transparent, 255 is max
+            for offset in [(-1, 0), (1, 0), (0, -1), (0, 1)]: # render 4 times with an offset of 1 pixel # basically creates an outline
+                self.display_2.blit(display_silhouette, offset)
+
 
             for particle in self.particles.copy(): # doing copy bc were removing during iteration
                 kill = particle.update()
@@ -134,6 +193,7 @@ class Game:
                 if kill:
                     self.particles.remove(particle)
 
+ 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
@@ -144,7 +204,8 @@ class Game:
                     if event.key == pygame.K_RIGHT:
                         self.movement[1] = True
                     if event.key == pygame.K_UP:
-                        self.player.jump() 
+                        if self.player.jump():
+                            self.sfx['shoot'].play()
                     if event.key == pygame.K_x:  #self.player.velocity[1] = -3 # adds a smooth jump cause velo is 'backwards'
                         self.player.dash()
                 if event.type == pygame.KEYUP:
@@ -153,8 +214,21 @@ class Game:
                     if event.key == pygame.K_RIGHT:
                         self.movement[1] = False
 
-            self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0,0))
+            if self.transition:
+                transition_surf = pygame.Surface(self.display.get_size()) # creates black surface the size of display
+                pygame.draw.circle(transition_surf, (255, 255, 255), (self.display.get_width() // 2, self.display.get_height() // 2), (30 - abs(self.transition)) * 8) # x8 makes ure circle can expand to proper size
+                transition_surf.set_colorkey((255,255,255))
+                self.display.blit(transition_surf, (0, 0))
+
+            self.display_2.blit(self.display, (0, 0))
+
+            screenshake_offset = (random.random() * self.screenshake - self.screenshake / 2, random.random() * self.screenshake - self.screenshake / 2)
+            self.screen.blit(pygame.transform.scale(self.display_2, self.screen.get_size()), screenshake_offset)
             pygame.display.update()
             self.clock.tick(60) #  makes game run at 60 fps
 
 Game().run()
+
+# for executable PyInstaller game.py --noconsole -- onefile
+# game.py bc its main executable, noconsole so that the client doesnt see the console, and one file for 1 file
+# windows flags things made with pyinstaller bc people make hacks with pyinstaller
