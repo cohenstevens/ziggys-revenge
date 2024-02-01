@@ -54,7 +54,11 @@ class Editor:
 
             self.tilemap.render(self.display, offset=render_scroll)
 
-            current_tile_img = self.assets[self.tile_list[self.tile_group]][self.tile_variant].copy()
+            try:
+                current_tile_img = self.assets[self.tile_list[self.tile_group]][self.tile_variant].copy()
+            except:
+                print("Out of range")
+                self.tile_variant = 0
             current_tile_img.set_alpha(100) # sets image transparency, 0 is full transparent, 255 is max
 
             mpos = pygame.mouse.get_pos() # gets pixels coordinates cooresponding to the window size
