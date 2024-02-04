@@ -6,7 +6,7 @@ from scripts.tilemap import Tilemap
 RENDER_SCALE = 2.0
 
 class Editor:
-    def __init__(self):
+    def __init__(self, choice):
         pygame.init()
 
         pygame.display.set_caption('editor')
@@ -29,7 +29,8 @@ class Editor:
         self.tilemap = Tilemap(self, tile_size=16)
 
         try:
-            self.tilemap.load('data/maps/0.json')
+            choice += '.json'
+            self.tilemap.load('data/maps/' + choice)
         except FileNotFoundError:
             pass
 
@@ -130,7 +131,7 @@ class Editor:
                     if event.key == pygame.K_t:
                         self.tilemap.autotile()
                     if event.key == pygame.K_o:
-                        self.tilemap.save('map.json')
+                        self.tilemap.save(choice + '.json')
                     if event.key == pygame.K_LSHIFT:
                         self.shift = True
                 if event.type == pygame.KEYUP:
@@ -148,5 +149,7 @@ class Editor:
             self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0,0))
             pygame.display.update()
             self.clock.tick(60) #  makes game run at 60 fps
+print('What map would you like to edit?')
+choice = input()
 
-Editor().run()
+Editor(choice).run()
