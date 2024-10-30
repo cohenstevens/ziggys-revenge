@@ -16,7 +16,7 @@ class Game:
         pygame.init()
 
         pygame.display.set_caption("Ziggy's Revenge")
-        self.screen = pygame.display.set_mode((640, 480)) # creates display window
+        self.screen = pygame.display.set_mode((640, 480), pygame.RESIZABLE) # creates display window
         self.display = pygame.Surface((320, 240) , pygame.SRCALPHA) # render onto this. basically loads in a plain image at set size, which is half of display in this scenario
         self.display_2 = pygame.Surface((320, 240))
 
@@ -198,6 +198,8 @@ class Game:
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
+                elif event.type == pygame.VIDEORESIZE:
+                    self.screen = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_LEFT:
                         self.movement[0] = True
@@ -224,6 +226,9 @@ class Game:
 
             screenshake_offset = (random.random() * self.screenshake - self.screenshake / 2, random.random() * self.screenshake - self.screenshake / 2)
             self.screen.blit(pygame.transform.scale(self.display_2, self.screen.get_size()), screenshake_offset)
+            
+            scaled_display = pygame.transform.scale(self.display, self.screen.get_size())
+            self.screen.blit(scaled_display, (0, 0))  # Blit the scaled content to the screen
             pygame.display.update()
             self.clock.tick(60) #  makes game run at 60 fps
 
