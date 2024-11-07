@@ -134,6 +134,8 @@ class Editor:
                         self.tilemap.save(choice + '.json')
                     if event.key == pygame.K_LSHIFT:
                         self.shift = True
+                    if event.key == pygame.K_r:
+                        self.rotate
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_a:
                         self.movement[0] = False

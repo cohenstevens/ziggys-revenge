@@ -74,9 +74,12 @@ class Game:
     def load_level(self, map_id):
         self.tilemap.load('data/maps/' + str(map_id) + '.json')
 
+        tree_type_numbers = [3, 4, 5]
+
         self.leaf_spawner = []
-        for tree in self.tilemap.extract([('large_decor', 2)], keep=True):
-            self.leaf_spawner.append(pygame.Rect(4 + tree['pos'][0], 4 + tree['pos'][1], 23, 13)) # rect is x,y,width,height  
+        for number in tree_type_numbers:
+            for tree in self.tilemap.extract([('large_decor', number)], keep=True):
+                self.leaf_spawner.append(pygame.Rect(4 + tree['pos'][0], 4 + tree['pos'][1], 23, 13)) # rect is x,y,width,height  
 
         # cant spawn enemies on grid or RuntimeError: dictionary changed size during iteration
         self.enemies = []
