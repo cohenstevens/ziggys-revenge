@@ -32,7 +32,7 @@ class Editor:
             choice += '.json'
             self.tilemap.load('data/maps/' + choice)
         except FileNotFoundError:
-            pass
+            print("Map Not Found")
 
         self.scroll = [0,0] # coordinates are top left of screen
 
@@ -44,6 +44,14 @@ class Editor:
         self.right_clicking = False
         self.shift = False
         self.ongrid = True
+
+        
+    def draw_text(self, text, pos, color=(255, 255, 255)):
+                font = pygame.font.SysFont('freesansbold.ttf', 20)
+                rendered_text = font.render(text, True, color)
+                text_rect = rendered_text.get_rect()
+                text_rect.bottomright = pos
+                self.display.blit(rendered_text, text_rect)   
 
     def run(self):
         while True:
@@ -150,6 +158,28 @@ class Editor:
 
             self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0,0))
             pygame.display.update()
+            
+            
+
+            # Display controls at the bottom-right corner
+            screen_width, screen_height = self.display.get_size()
+
+            controls_text = [
+                "WASD - Move",
+                "G - Toggle Grid",
+                "T - Auto-tile",
+                "O - Save Map",
+                "R - Rotate Tile",
+                "Shift + Scroll - Change Variant",
+                "Scroll - Change Tile Group"
+            ]
+
+            y_offset = 20
+            for i, line in enumerate(controls_text):
+                self.draw_text(line, (screen_width - 10, screen_height - 10 - (i * y_offset)))
+
+
+
             self.clock.tick(60) #  makes game run at 60 fps
 print('What map would you like to edit?')
 choice = input()
