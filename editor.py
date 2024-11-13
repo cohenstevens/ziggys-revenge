@@ -10,7 +10,7 @@ class Editor:
         pygame.init()
 
         pygame.display.set_caption('editor')
-        self.screen = pygame.display.set_mode((640, 480)) # creates display window
+        self.screen = pygame.display.set_mode((640, 480), pygame.RESIZABLE) # creates display window
         self.display = pygame.Surface((320, 240)) # render onto this. basically loads in a plain image at set size, which is half of display in this scenario
 
         self.clock = pygame.time.Clock()
@@ -45,13 +45,12 @@ class Editor:
         self.shift = False
         self.ongrid = True
 
+        self.font = pygame.font.SysFont("Arial", 12)
+
         
-    def draw_text(self, text, pos, color=(255, 255, 255)):
-                font = pygame.font.SysFont('freesansbold.ttf', 20)
-                rendered_text = font.render(text, True, color)
-                text_rect = rendered_text.get_rect()
-                text_rect.bottomright = pos
-                self.display.blit(rendered_text, text_rect)   
+    def draw_text(self, text, x, y):
+        controls = self.font.render(text, True, (255,255,255))
+        self.display.blit(controls, (x,y)) 
 
     def run(self):
         while True:
@@ -100,6 +99,10 @@ class Editor:
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
+
+                elif event.type == pygame.VIDEORESIZE:
+                    self.screen = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
+                
 
                 if event.type == pygame.MOUSEBUTTONDOWN: # event type   
                     if event.button == 1:
@@ -156,27 +159,18 @@ class Editor:
                     if event.key == pygame.K_LSHIFT:
                         self.shift = False
 
-            self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0,0))
+            self.draw_text("WASD - Move", 150, 0)
+            self.draw_text("G - Toggle Grid", 150, 11)
+            self.draw_text("T - Auto-tile", 150, 22)
+            self.draw_text("O - Save Map", 150, 33)
+            self.draw_text("R - Rotate Tile", 150, 44)
+            self.draw_text("Shift + Scroll - Change Variant", 150, 55)
+            self.draw_text("Scroll - Change Tile Group", 150, 66)
+
+            scaled_display = pygame.transform.scale(self.display, self.screen.get_size())
+            self.screen.blit(scaled_display, (0, 0))  # Blit the scaled content to the screen
             pygame.display.update()
-            
-            
 
-            # Display controls at the bottom-right corner
-            screen_width, screen_height = self.display.get_size()
-
-            controls_text = [
-                "WASD - Move",
-                "G - Toggle Grid",
-                "T - Auto-tile",
-                "O - Save Map",
-                "R - Rotate Tile",
-                "Shift + Scroll - Change Variant",
-                "Scroll - Change Tile Group"
-            ]
-
-            y_offset = 20
-            for i, line in enumerate(controls_text):
-                self.draw_text(line, (screen_width - 10, screen_height - 10 - (i * y_offset)))
 
 
 
