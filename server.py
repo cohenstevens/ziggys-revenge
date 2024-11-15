@@ -279,10 +279,12 @@ class Game:
             self.clock.tick(60) #  makes game run at 60 fps
 
 
-t1 = threading.Thread(target=Game().run(), args=[])
-t2 = threading.Thread(target=Game().server_thread(), args=[])
+t1 = threading.Thread(target=Game().run, args=[])
+t2 = threading.Thread(target=Game().server_thread, args=[])
 t1.start()
 t2.start()
+t1.join()
+t2.join()
 
 
 Game().run()
