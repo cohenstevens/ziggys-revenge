@@ -45,7 +45,7 @@ class Editor:
         self.shift = False
         self.ongrid = True
 
-        self.font = pygame.font.SysFont("Arial", 12)
+        self.font = pygame.font.SysFont("Arial", 10)
 
         
     def draw_text(self, text, x, y):
@@ -159,19 +159,9 @@ class Editor:
                     if event.key == pygame.K_LSHIFT:
                         self.shift = False
 
-            self.draw_text("WASD - Move", 150, 0)
-            self.draw_text("G - Toggle Grid", 150, 11)
-            self.draw_text("T - Auto-tile", 150, 22)
-            self.draw_text("O - Save Map", 150, 33)
-            self.draw_text("R - Rotate Tile", 150, 44)
-            self.draw_text("Shift + Scroll - Change Variant", 150, 55)
-            self.draw_text("Scroll - Change Tile Group", 150, 66)
-
             scaled_display = pygame.transform.scale(self.display, self.screen.get_size())
             self.screen.blit(scaled_display, (0, 0))  # Blit the scaled content to the screen
             pygame.display.update()
-
-
 
 
             self.clock.tick(60) #  makes game run at 60 fps
