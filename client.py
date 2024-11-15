@@ -4,7 +4,7 @@ import time
 
 def client_program():
     print("Trying to connect to server")
-    host = "192.168.1.51"
+    host = "10.27.10.121"
     port = 5000
 
     client_socket = socket.socket()
@@ -27,21 +27,27 @@ def client_program():
     # Event handlers for key presses and releases
     def on_left_press(event):
         send_message('left')
+        time.sleep(0.1)
     
     def on_left_release(event):
         send_message('l_false')
+        time.sleep(0.1)
 
     def on_right_press(event):
         send_message('right')
+        time.sleep(0.1)
     
     def on_right_release(event):
         send_message('r_false')
+        time.sleep(0.1)
 
     def on_up_press(event):
         send_message('up')
+        time.sleep(0.1)
 
     def on_x_press(event):
         send_message('x')
+        time.sleep(0.1)
 
     # Register event listeners for specific keys
     keyboard.on_press_key('left', on_left_press)
