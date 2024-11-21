@@ -144,6 +144,7 @@ class Player(PhysicsEntity):
         self.jumps = 2
         self.wall_slide = False
         self.dashing = 0
+        self.bones = 0
 
     def update(self, tilemap, movement=(0,0)):
         super().update(tilemap, movement=movement)
@@ -233,3 +234,16 @@ class Player(PhysicsEntity):
                 self.dashing = -60 # 60 is for how long you are dashing, the negative is for the direction
             else:
                 self.dashing = 60
+
+    def throw(self):
+        if self.bones > 0:
+            if (self.flip): # if looking left and player is left
+                self.game.sfx['shoot'].play()
+                self.game.hero_projectiles.append([[self.rect().centerx - 7, self.rect().centery], -1.5, 0])
+                for i in range(4):
+                    self.game.sparks.append(Spark(self.game.hero_projectiles[-1][0], random.random() - 0.5 + math.pi, 2 + random.random())) # self.projectiles[-1][0] -1 is last projectile shot # + math.pi makes it face left
+            if (not self.flip):
+                self.game.sfx['shoot'].play()
+                self.game.hero_projectiles.append([[self.rect().centerx + 7, self.rect().centery], 1.5, 0])
+                for i in range(4):
+                    self.game.sparks.append(Spark(self.game.hero_projectiles[-1][0], random.random() - 0.5, 2 + random.random())) 

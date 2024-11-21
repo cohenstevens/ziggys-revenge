@@ -90,7 +90,8 @@ class Game:
             else:
                 self.enemies.append(Enemy(self, spawner['pos'], (8,15)))
 
-        self.projectiles = []
+        self.projectiles = [] # enemy projectiles
+        self.hero_projectiles =[] # ziggy projectiles
         self.particles = []
         self.sparks = []
 
@@ -175,6 +176,31 @@ class Game:
                             speed = random.random() * 5
                             self.sparks.append(Spark(self.player.rect().center, angle, 2 + random.random()))
                             self.particles.append(Particle(self, 'particle', self.player.rect().center, velocity=[math.cos(angle + math.pi) * speed * 0.5, math.sin(angle + math.pi) * speed * 0.5], frame=random.randint(0, 7)))
+
+            #[[x, y], direction, timer]
+            for projectile in self.hero_projectiles.copy(): # have to copy if removing from list otherwise runtime error
+                projectile[0][0] += projectile[1] # adding direction to projectile
+                projectile[2] += 1
+                img = self.assets['projectile']
+                self.display.blit(img, (projectile[0][0] - img.get_width() / 2 - render_scroll[0], projectile[0][1] - img.get_height() / 2 - render_scroll[1])) # half of width centers it in respect to rendering
+                if self.tilemap.solid_check(projectile[0]): # checking location of projectile
+                    self.hero_projectiles.remove(projectile)
+                    for i in range(4):
+                        self.sparks.append(Spark(projectile[0], random.random() - 0.5 + (math.pi if projectile[1] > 0 else 0), 2 + random.random())) # shoot sparks left only if projectile is going right
+                elif projectile[2] > 360:
+                    self.hero_projectiles.remove(projectile)
+                else:
+                    if self.en.rect().collidepoint(projectile[0]):
+                        self.hero_projectiles.remove(projectile)
+                        self.dead += 1
+                        self.sfx['hit'].play()
+                        self.screenshake = max(16, self.screenshake)
+                        for i in range(30):
+                            angle = random.random() * math.pi * 2
+                            speed = random.random() * 5
+                            self.sparks.append(Spark(self.player.rect().center, angle, 2 + random.random()))
+                            self.particles.append(Particle(self, 'particle', self.player.rect().center, velocity=[math.cos(angle + math.pi) * speed * 0.5, math.sin(angle + math.pi) * speed * 0.5], frame=random.randint(0, 7)))
+
 
             for spark in self.sparks.copy():
                 kill = spark.update()
