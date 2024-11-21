@@ -100,7 +100,7 @@ class Game:
 
     def run(self):
         pygame.mixer.music.load('data/music.wav') # wav files seems to be better with executables
-        pygame.mixer.music.set_volume(0.5)
+        pygame.mixer.music.set_volume(0.25)
         pygame.mixer.music.play(-1) # takes a number of loops, -1 loops forever
 
         self.sfx['ambience'].play(-1)
