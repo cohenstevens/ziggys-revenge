@@ -117,7 +117,26 @@ class Game:
         while True:
             self.display.fill((0, 0, 0, 0))
             self.display_2.blit(self.assets['background'][self.random_background], (0,0)) 
-            self.txtscore = self.font.render(f"{self.player.score:06}", True, (255, 255, 255))
+
+            # Render the Score and outline
+            
+            outline_color = (0, 0, 0)  # Black color for the outline
+            main_color = (255, 255, 255)  # White color for the main text
+
+            outline_positions = [
+                (-1, -1), (0, -1), (1, -1),  # Top-left, Top, Top-right
+                (-1, 0),          (1, 0),   # Left, Right
+                (-1, 1), (0, 1), (1, 1)    # Bottom-left, Bottom, Bottom-right
+            ]
+
+            # Render the black outline
+            for offset in outline_positions:
+                outline_surface = self.font.render(f"{self.player.score:06}", True, outline_color)
+                self.display_2.blit(outline_surface, (10 + offset[0], 5 + offset[1]))
+
+            # Render the main text
+            self.txtscore = self.font.render(f"{self.player.score:06}", True, main_color)
+            self.display_2.blit(self.txtscore, (10, 5))
             self.display_2.blit(self.txtscore, (10, 5))  # Position it at the top-left corner of the display
             self.screenshake = max(0, self.screenshake - 1)
 
