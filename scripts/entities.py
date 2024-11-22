@@ -127,7 +127,25 @@ class Enemy(PhysicsEntity):
                     self.game.particles.append(Particle(self.game, 'particle', self.rect().center, velocity=[math.cos(angle + math.pi) * speed * 0.5, math.sin(angle + math.pi) * speed * 0.5], frame=random.randint(0, 7)))
                 self.game.sparks.append(Spark(self.rect().center, 0, 5+ random.random()))
                 self.game.sparks.append(Spark(self.rect().center, math.pi, 5+ random.random()))
+                self.game.player.bones += 1
                 return True
+            
+        for projectile in self.game.hero_projectiles.copy():    
+            if self.rect().collidepoint(projectile[0]):
+                self.game.hero_projectiles.remove(projectile)
+                self.game.screenshake = max(16, self.game.screenshake)
+                self.game.sfx['hit'].play()
+                for i in range(30):
+                    angle = random.random() * math.pi * 2
+                    speed = random.random() * 5
+                    self.game.sparks.append(Spark(self.rect().center, angle, 2 + random.random()))
+                    self.game.particles.append(Particle(self.game, 'particle', self.rect().center, velocity=[math.cos(angle + math.pi) * speed * 0.5, math.sin(angle + math.pi) * speed * 0.5], frame=random.randint(0, 7)))
+                    self.game.sparks.append(Spark(self.rect().center, 0, 5+ random.random()))
+                    self.game.sparks.append(Spark(self.rect().center, math.pi, 5+ random.random()))
+                    self.game.player.bones += 1
+                    return True
+            
+
 
     def render(self, surf, offset=(0,0)):
         super().render(surf, offset=offset)
@@ -238,11 +256,13 @@ class Player(PhysicsEntity):
     def throw(self):
         if self.bones > 0:
             if (self.flip): # if looking left and player is left
+                self.bones -= 1
                 self.game.sfx['shoot'].play()
                 self.game.hero_projectiles.append([[self.rect().centerx - 7, self.rect().centery], -1.5, 0])
                 for i in range(4):
                     self.game.sparks.append(Spark(self.game.hero_projectiles[-1][0], random.random() - 0.5 + math.pi, 2 + random.random())) # self.projectiles[-1][0] -1 is last projectile shot # + math.pi makes it face left
             if (not self.flip):
+                self.bones -= 1
                 self.game.sfx['shoot'].play()
                 self.game.hero_projectiles.append([[self.rect().centerx + 7, self.rect().centery], 1.5, 0])
                 for i in range(4):

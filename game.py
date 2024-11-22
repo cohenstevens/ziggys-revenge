@@ -42,7 +42,8 @@ class Game:
             'particle/leaf': Animation(load_images('particles/leaf'), img_dur=20, loop=False),
             'particle/particle': Animation(load_images('particles/particle'), img_dur=6, loop=False),
             'gun': load_image('gun.png'),
-            'projectile': load_image('projectile.png'),
+            'bullet': load_image('projectiles/bullet.png'),
+            'bone': load_image('projectiles/bone.png'),
         }
 
         self.sfx = {
@@ -98,6 +99,7 @@ class Game:
         self.scroll = [0,0] # coordinates are top left of screen
         self.dead = 0
         self.transition = -30
+        self.angle = 0
 
     def run(self):
         pygame.mixer.music.load('data/music.wav') # wav files seems to be better with executables
@@ -157,7 +159,7 @@ class Game:
             for projectile in self.projectiles.copy(): # have to copy if removing from list otherwise runtime error
                 projectile[0][0] += projectile[1] # adding direction to projectile
                 projectile[2] += 1
-                img = self.assets['projectile']
+                img = self.assets['bullet']
                 self.display.blit(img, (projectile[0][0] - img.get_width() / 2 - render_scroll[0], projectile[0][1] - img.get_height() / 2 - render_scroll[1])) # half of width centers it in respect to rendering
                 if self.tilemap.solid_check(projectile[0]): # checking location of projectile
                     self.projectiles.remove(projectile)
@@ -176,12 +178,16 @@ class Game:
                             speed = random.random() * 5
                             self.sparks.append(Spark(self.player.rect().center, angle, 2 + random.random()))
                             self.particles.append(Particle(self, 'particle', self.player.rect().center, velocity=[math.cos(angle + math.pi) * speed * 0.5, math.sin(angle + math.pi) * speed * 0.5], frame=random.randint(0, 7)))
+            
+            self.angle += 2
+            self.angle %= 360
 
             #[[x, y], direction, timer]
             for projectile in self.hero_projectiles.copy(): # have to copy if removing from list otherwise runtime error
                 projectile[0][0] += projectile[1] # adding direction to projectile
                 projectile[2] += 1
-                img = self.assets['projectile']
+                img = self.assets['bone']
+                img = pygame.transform.rotate(img, self.angle)
                 self.display.blit(img, (projectile[0][0] - img.get_width() / 2 - render_scroll[0], projectile[0][1] - img.get_height() / 2 - render_scroll[1])) # half of width centers it in respect to rendering
                 if self.tilemap.solid_check(projectile[0]): # checking location of projectile
                     self.hero_projectiles.remove(projectile)
@@ -189,18 +195,6 @@ class Game:
                         self.sparks.append(Spark(projectile[0], random.random() - 0.5 + (math.pi if projectile[1] > 0 else 0), 2 + random.random())) # shoot sparks left only if projectile is going right
                 elif projectile[2] > 360:
                     self.hero_projectiles.remove(projectile)
-                else:
-                    if self.en.rect().collidepoint(projectile[0]):
-                        self.hero_projectiles.remove(projectile)
-                        self.dead += 1
-                        self.sfx['hit'].play()
-                        self.screenshake = max(16, self.screenshake)
-                        for i in range(30):
-                            angle = random.random() * math.pi * 2
-                            speed = random.random() * 5
-                            self.sparks.append(Spark(self.player.rect().center, angle, 2 + random.random()))
-                            self.particles.append(Particle(self, 'particle', self.player.rect().center, velocity=[math.cos(angle + math.pi) * speed * 0.5, math.sin(angle + math.pi) * speed * 0.5], frame=random.randint(0, 7)))
-
 
             for spark in self.sparks.copy():
                 kill = spark.update()
@@ -239,6 +233,8 @@ class Game:
                             self.sfx['shoot'].play()
                     if event.key == pygame.K_x:  #self.player.velocity[1] = -3 # adds a smooth jump cause velo is 'backwards'
                         self.player.dash()
+                    if event.key == pygame.K_SPACE:
+                        self.player.throw()
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_LEFT:
                         self.movement[0] = False
