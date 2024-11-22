@@ -103,7 +103,7 @@ class Game:
         self.dead = 0
         self.transition = -30
         self.angle = 0
-        self.random_background = random.randint(2, len(os.listdir('data/images/backgrounds'))-1) # cycles between different backgrounds in game
+        self.random_background = random.randint(0, len(os.listdir('data/images/backgrounds'))-1) # cycles between different backgrounds in game
 
     def run(self):
         pygame.mixer.music.load('data/music.wav') # wav files seems to be better with executables
@@ -173,6 +173,8 @@ class Game:
             for text in self.floating_texts[:]:
                 if not text.update():  # If text has expired
                     self.floating_texts.remove(text)
+                if not len(self.enemies):
+                    self.floating_texts.remove(text) 
 
             # Render floating texts
             for text in self.floating_texts:
