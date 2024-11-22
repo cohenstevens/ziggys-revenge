@@ -3,7 +3,6 @@ import pygame
 import random
 import math
 import os
-import time
 from scripts.entities import PhysicsEntity, Player, Enemy
 from scripts.utils import load_image, load_images, Animation
 from scripts.tilemap import Tilemap
@@ -66,7 +65,6 @@ class Game:
         self.clouds = Clouds(self.assets['clouds'], count=16)
 
         self.player = Player(self, (50, 50), (8,15))
-        self.player.score = 0
         self.floating_texts= []
         self.txtscore = self.font.render(str(self.player.score), True, (255,255,255))
         self.tilemap = Tilemap(self, tile_size=16)
@@ -105,7 +103,7 @@ class Game:
         self.dead = 0
         self.transition = -30
         self.angle = 0
-        self.random_background = random.randint(0, len(os.listdir('data/images/backgrounds'))-1) # cycles between different backgrounds in game
+        self.random_background = random.randint(2, len(os.listdir('data/images/backgrounds'))-1) # cycles between different backgrounds in game
 
     def run(self):
         pygame.mixer.music.load('data/music.wav') # wav files seems to be better with executables

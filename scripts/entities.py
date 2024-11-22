@@ -163,6 +163,7 @@ class Player(PhysicsEntity):
         self.wall_slide = False
         self.dashing = 0
         self.bones = 0
+        self.score = 0
 
     def update(self, tilemap, movement=(0,0)):
         super().update(tilemap, movement=movement)
