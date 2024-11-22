@@ -9,6 +9,7 @@ from scripts.tilemap import Tilemap
 from scripts.clouds import Clouds
 from scripts.particle import Particle
 from scripts.spark import Spark
+from scripts.FloatText import FloatingText
 
 
 class Game:
@@ -23,7 +24,7 @@ class Game:
         self.clock = pygame.time.Clock()
 
         self.movement = [False, False]
-
+        self.font = pygame.font.SysFont("Arial", 16)
         self.assets = {
             'decor': load_images('tiles/decor'),
             'grass': load_images('tiles/grass'),
@@ -63,7 +64,9 @@ class Game:
         self.clouds = Clouds(self.assets['clouds'], count=16)
 
         self.player = Player(self, (50, 50), (8,15))
-
+        self.player.score = 0
+        self.floating_texts= []
+        self.txtscore = self.font.render(str(self.player.score), True, (255,255,255))
         self.tilemap = Tilemap(self, tile_size=16)
 
         self.level = 0
@@ -111,7 +114,8 @@ class Game:
         while True:
             self.display.fill((0, 0, 0, 0))
             self.display_2.blit(self.assets['background'], (0,0))
-
+            self.txtscore = self.font.render(f"{self.player.score:06}", True, (255, 255, 255))
+            self.display_2.blit(self.txtscore, (10, 5))  # Position it at the top-left corner of the display
             self.screenshake = max(0, self.screenshake - 1)
 
             if not len(self.enemies):
@@ -145,11 +149,24 @@ class Game:
 
             self.tilemap.render(self.display, offset=render_scroll)
 
+            # Update floating texts
+            for text in self.floating_texts[:]:
+                if not text.update():  # If text has expired
+                    break
+                    # self.floating_texts.remove(text)
+
+            # Render floating texts
+            for text in self.floating_texts:
+                text.render(self.display_2)
             for enemy in self.enemies.copy():
                 kill = enemy.update(self.tilemap, (0,0))
                 enemy.render(self.display, offset=render_scroll)
                 if kill:
                     self.enemies.remove(enemy)
+                    self.player.score+=100
+                    #enemy_x, enemy_y = enemy.position  # Get enemy's position
+                    self.floating_texts.append(FloatingText(self.player.pos[0], self.player.pos[1] - 20, "+100")) #This no work it spawns up in the sky
+                    #print(self.player.score)
 
             if self.dead <= 2:
                 self.player.update(self.tilemap, (self.movement[1] - self.movement[0], 0))
