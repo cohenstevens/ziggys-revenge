@@ -3,6 +3,7 @@ import pygame
 import random
 import math
 import os
+import time
 from scripts.entities import PhysicsEntity, Player, Enemy
 from scripts.utils import load_image, load_images, Animation
 from scripts.tilemap import Tilemap
@@ -60,7 +61,7 @@ class Game:
         self.sfx['shoot'].set_volume(0.4)
         self.sfx['hit'].set_volume(0.8)
         self.sfx['dash'].set_volume(0.3)
-        self.sfx['jump'].set_volume(1)
+        self.sfx['jump'].set_volume(.5)
 
         self.clouds = Clouds(self.assets['clouds'], count=16)
 
@@ -154,8 +155,7 @@ class Game:
             # Update floating texts
             for text in self.floating_texts[:]:
                 if not text.update():  # If text has expired
-                    break
-                    # self.floating_texts.remove(text)
+                    self.floating_texts.remove(text)
 
             # Render floating texts
             for text in self.floating_texts:
@@ -167,7 +167,7 @@ class Game:
                     self.enemies.remove(enemy)
                     self.player.score+=100
                     #enemy_x, enemy_y = enemy.position  # Get enemy's position
-                    self.floating_texts.append(FloatingText(self.player.pos[0], self.player.pos[1] - 20, "+100")) #This no work it spawns up in the sky
+                    self.floating_texts.append(FloatingText((self.player.pos[0] - self.scroll[0]) - 5, (self.player.pos[1] - self.scroll[1]) - 15, "+100")) #This no work it spawns up in the sky
                     #print(self.player.score)
 
             if self.dead <= 2:
