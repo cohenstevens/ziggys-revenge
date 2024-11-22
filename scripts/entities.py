@@ -257,13 +257,13 @@ class Player(PhysicsEntity):
         if self.bones > 0:
             if (self.flip): # if looking left and player is left
                 self.bones -= 1
-                self.game.sfx['shoot'].play()
+                self.game.sfx['throw'].play()
                 self.game.hero_projectiles.append([[self.rect().centerx - 7, self.rect().centery], -1.5, 0])
                 for i in range(4):
                     self.game.sparks.append(Spark(self.game.hero_projectiles[-1][0], random.random() - 0.5 + math.pi, 2 + random.random())) # self.projectiles[-1][0] -1 is last projectile shot # + math.pi makes it face left
             if (not self.flip):
                 self.bones -= 1
-                self.game.sfx['shoot'].play()
+                self.game.sfx['throw'].play()
                 self.game.hero_projectiles.append([[self.rect().centerx + 7, self.rect().centery], 1.5, 0])
                 for i in range(4):
                     self.game.sparks.append(Spark(self.game.hero_projectiles[-1][0], random.random() - 0.5, 2 + random.random())) 
