@@ -31,7 +31,7 @@ class Game:
             'large_decor': load_images('tiles/large_decor'),
             'stone': load_images('tiles/stone'),
             'player': load_image('entities/player.png'),
-            'background': load_image('background.png'),
+            'background': load_images('backgrounds'),
             'clouds': load_images('clouds'),
             'enemy/idle': Animation(load_images('entities/enemy/idle'), img_dur=6),
             'enemy/run': Animation(load_images('entities/enemy/run'), img_dur=4),
@@ -53,13 +53,14 @@ class Game:
             'hit': pygame.mixer.Sound('data/sfx/hit.wav'),
             'shoot': pygame.mixer.Sound('data/sfx/shoot.wav'),
             'ambience': pygame.mixer.Sound('data/sfx/ambience.wav'),
+            'throw': pygame.mixer.Sound('data/sfx/throw.wav')
         }
 
-        self.sfx['ambience'].set_volume(0.2)
+        self.sfx['ambience'].set_volume(0.3)
         self.sfx['shoot'].set_volume(0.4)
         self.sfx['hit'].set_volume(0.8)
         self.sfx['dash'].set_volume(0.3)
-        self.sfx['jump'].set_volume(0.7)
+        self.sfx['jump'].set_volume(1)
 
         self.clouds = Clouds(self.assets['clouds'], count=16)
 
@@ -103,6 +104,7 @@ class Game:
         self.dead = 0
         self.transition = -30
         self.angle = 0
+        self.random_background = random.randint(0, len(os.listdir('data/images/backgrounds'))-1) # cycles between different backgrounds in game
 
     def run(self):
         pygame.mixer.music.load('data/music.wav') # wav files seems to be better with executables
@@ -113,7 +115,7 @@ class Game:
 
         while True:
             self.display.fill((0, 0, 0, 0))
-            self.display_2.blit(self.assets['background'], (0,0))
+            self.display_2.blit(self.assets['background'][self.random_background], (0,0)) 
             self.txtscore = self.font.render(f"{self.player.score:06}", True, (255, 255, 255))
             self.display_2.blit(self.txtscore, (10, 5))  # Position it at the top-left corner of the display
             self.screenshake = max(0, self.screenshake - 1)
@@ -200,6 +202,7 @@ class Game:
             self.angle %= 360
 
             #[[x, y], direction, timer]
+            # tells when the hero projectiles need to be removed from the screen
             for projectile in self.hero_projectiles.copy(): # have to copy if removing from list otherwise runtime error
                 projectile[0][0] += projectile[1] # adding direction to projectile
                 projectile[2] += 1
@@ -247,7 +250,7 @@ class Game:
                         self.movement[1] = True
                     if event.key == pygame.K_UP:
                         if self.player.jump():
-                            self.sfx['shoot'].play()
+                            self.sfx['jump'].play()
                     if event.key == pygame.K_x:  #self.player.velocity[1] = -3 # adds a smooth jump cause velo is 'backwards'
                         self.player.dash()
                     if event.key == pygame.K_SPACE:
