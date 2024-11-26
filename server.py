@@ -109,53 +109,20 @@ class Game:
     def update(self, input_data):
         if(input_data == 'up'):
             if self.player.jump():
-                self.sfx['shoot'].play()
+                self.sfx['jump'].play()
         if(input_data == 'left'):
             self.movement[0] = True
         if(input_data == 'right'):
             self.movement[1] = True
         if(input_data == 'x'):
             self.player.dash()
+        if(input_data == 'space'):
+            self.player.throw()
         if(input_data == 'l_false'):
             self.movement[0] = False
         if(input_data == 'r_false'):
             self.movement[1] = False
-
-    def server_thread(self):
-        host = socket.gethostbyname(socket.gethostname())
-        port = 5000
-        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server_socket.bind((host, port))
-        server_socket.listen(1)
-        print(f"Server enabled on {host}:{port}")
-
-        conn, addr = server_socket.accept()
-        print(f"Connection from: {addr}")
-        while True:
-            data = conn.recv(1024).decode()
-            if not data:
-                break
-            self.update(data)
-            print("from connected user: " + str(data))
         
-        conn.close()
-        server_socket.close()
-        print("Server closed")
-
-    def update(self, input_data):
-        if(input_data == 'up'):
-            if self.player.jump():
-                self.sfx['shoot'].play()
-        if(input_data == 'left'):
-            self.movement[0] = True
-        if(input_data == 'right'):
-            self.movement[1] = True
-        if(input_data == 'x'):
-            self.player.dash()
-        if(input_data == 'l_false'):
-            self.movement[0] = False
-        if(input_data == 'r_false'):
-            self.movement[1] = False
 
     def server_thread(self):
         host = socket.gethostbyname(socket.gethostname())

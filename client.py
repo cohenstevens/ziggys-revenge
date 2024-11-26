@@ -43,6 +43,9 @@ def client_program():
     def on_x_press(event):
         send_message('x')
 
+    def on_space_press(event):
+        send_message('space')
+
     # Register event listeners for specific keys
     keyboard.on_press_key('left', on_left_press)
     keyboard.on_release_key('left', on_left_release)
@@ -50,6 +53,7 @@ def client_program():
     keyboard.on_release_key('right', on_right_release)
     keyboard.on_press_key('up', on_up_press)
     keyboard.on_press_key('x', on_x_press)
+    keyboard.on_press_key('space', on_space_press)
 
     try:
         # Keep the program running until 'q' is pressed to quit
