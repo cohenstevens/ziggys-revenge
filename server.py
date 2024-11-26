@@ -99,47 +99,42 @@ class Game:
         self.dead = 0
         self.transition = -30
 
-    def server_thread(self):
-        # get the hostname
-        self.host = socket.gethostbyname(socket.gethostname())
-        self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.s.connect(("8.8.8.8", 80))
-        self.host = self.s.getsockname()[0]
-        self.s.close()
-        print(self.host)
-        self.port = 5000  # initiate port no above 1024
+    def update(self, input_data):
+        if(input_data == 'up'):
+            if self.player.jump():
+                self.sfx['shoot'].play()
+        if(input_data == 'left'):
+            self.movement[0] = True
+        if(input_data == 'right'):
+            self.movement[1] = True
+        if(input_data == 'x'):
+            self.player.dash()
+        if(input_data == 'l_false'):
+            self.movement[0] = False
+        if(input_data == 'r_false'):
+            self.movement[1] = False
 
-        self.server_socket = socket.socket()  # get instance
-        # look closely. The bind() function takes tuple as argument
-        self.server_socket.bind((self.host, self.port))  # bind host address and port together
-        print("Server enabled...")
-        # configure how many client the server can listen simultaneously
-        self.server_socket.listen(2)
-        self.conn, self.address = self.server_socket.accept()  # accept new connection
-        print("Connection from: " + str(self.address))    
-        while True:        
-            # receive data stream. it won't accept data packet greater than 1024 bytes
-            self.data = self.conn.recv(1024).decode()
-            if not self.data:
-                # if data is not received break
+    def server_thread(self):
+        host = socket.gethostbyname(socket.gethostname())
+        port = 5000
+        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server_socket.bind((host, port))
+        server_socket.listen(1)
+        print(f"Server enabled on {host}:{port}")
+
+        conn, addr = server_socket.accept()
+        print(f"Connection from: {addr}")
+
+        while True:
+            data = conn.recv(1024).decode()
+            if not data:
                 break
-            
-            print("from connected user: " + str(self.data))
-            if(self.data == 'up'):
-                if self.player.jump():
-                    self.sfx['shoot'].play()
-            if(self.data == 'left'):
-                self.movement[0] = True
-            if(self.data == 'right'):
-                self.movement[1] = True
-            if(self.data == 'x'):
-                self.player.dash()
-            if(self.data == 'l_false'):
-                self.movement[0] = False
-            if(self.data == 'r_false'):
-                self.movement[1] = False
-                
-        self.conn.close()  # close the connection
+        
+            self.update(data)
+            print("from connected user: " + str(data))
+
+        conn.close()
+        server_socket.close()
 
     def run(self):
         pygame.mixer.music.load('data/music.wav') # wav files seems to be better with executables
@@ -279,13 +274,14 @@ class Game:
             self.clock.tick(60) #  makes game run at 60 fps
 
 
-t1 = threading.Thread(target=Game().run(), args=[])
-t2 = threading.Thread(target=Game().server_thread(), args=[])
-t1.start()
-t2.start()
-
-
-Game().run()
+if __name__ == '__main__':
+   game = Game()
+   game_thread = threading.Thread(target=game.run)
+   server_thread = threading.Thread(target=game.server_thread)
+   game_thread.start()
+   server_thread.start()
+   game_thread.join()
+   server_thread.join()
 
 # for executable PyInstaller game.py --noconsole -- onefile
 # game.py bc its main executable, noconsole so that the client doesnt see the console, and one file for 1 file

@@ -50,7 +50,7 @@ def client_program():
     keyboard.on_press_key('x', on_x_press)
 
     try:
-        # Keep the program running until 'q' is pressed
+        # Keep the program running until 'q' is pressed to quit
         while True:
             if keyboard.is_pressed('q'):
                 print("Exiting program")
