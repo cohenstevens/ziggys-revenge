@@ -124,17 +124,16 @@ class Game:
 
         conn, addr = server_socket.accept()
         print(f"Connection from: {addr}")
-
         while True:
             data = conn.recv(1024).decode()
             if not data:
                 break
-        
             self.update(data)
             print("from connected user: " + str(data))
-
+        
         conn.close()
         server_socket.close()
+        print("Server closed")
 
     def run(self):
         pygame.mixer.music.load('data/music.wav') # wav files seems to be better with executables
@@ -235,12 +234,12 @@ class Game:
                     self.particles.remove(particle)
 
  
-            # for event in pygame.event.get():
-            #     if event.type == pygame.QUIT:
-            #         pygame.quit()
-            #         sys.exit()
-            #     elif event.type == pygame.VIDEORESIZE:
-            #         self.screen = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.VIDEORESIZE:
+                    self.screen = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
             #     if event.type == pygame.KEYDOWN:
             #         if event.key == pygame.K_LEFT:
             #             self.movement[0] = True
@@ -275,13 +274,16 @@ class Game:
 
 
 if __name__ == '__main__':
-   game = Game()
-   game_thread = threading.Thread(target=game.run)
-   server_thread = threading.Thread(target=game.server_thread)
-   game_thread.start()
-   server_thread.start()
-   game_thread.join()
-   server_thread.join()
+    game = Game()
+    server_thread = threading.Thread(target=game.server_thread)
+    server_thread.start()
+    try:
+        game.run()
+    except KeyboardInterrupt:
+        print("Game interrupted")
+    finally:
+        server_thread.join()
+        print("Game and server shutdown")
 
 # for executable PyInstaller game.py --noconsole -- onefile
 # game.py bc its main executable, noconsole so that the client doesnt see the console, and one file for 1 file
