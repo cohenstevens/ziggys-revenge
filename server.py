@@ -9,6 +9,7 @@ from scripts.tilemap import Tilemap
 from scripts.clouds import Clouds
 from scripts.particle import Particle
 from scripts.spark import Spark
+from scripts.FloatText import FloatingText
 import threading
 import socket
 
@@ -24,26 +25,27 @@ class Game:
         self.clock = pygame.time.Clock()
 
         self.movement = [False, False]
-
+        self.font = pygame.font.SysFont("Arial", 16)
         self.assets = {
             'decor': load_images('tiles/decor'),
             'grass': load_images('tiles/grass'),
             'large_decor': load_images('tiles/large_decor'),
             'stone': load_images('tiles/stone'),
             'player': load_image('entities/player.png'),
-            'background': load_image('background.png'),
+            'background': load_images('backgrounds'),
             'clouds': load_images('clouds'),
             'enemy/idle': Animation(load_images('entities/enemy/idle'), img_dur=6),
             'enemy/run': Animation(load_images('entities/enemy/run'), img_dur=4),
             'player/idle': Animation(load_images('entities/player/idle'), img_dur=6),
-            'player/run': Animation(load_images('entities/player/run'), img_dur=4),
+            'player/run': Animation(load_images('entities/player/run'), img_dur=6),
             'player/jump': Animation(load_images('entities/player/jump')),
             'player/slide': Animation(load_images('entities/player/slide')),
             'player/wall_slide': Animation(load_images('entities/player/wall_slide')),
             'particle/leaf': Animation(load_images('particles/leaf'), img_dur=20, loop=False),
             'particle/particle': Animation(load_images('particles/particle'), img_dur=6, loop=False),
             'gun': load_image('gun.png'),
-            'projectile': load_image('projectile.png'),
+            'bullet': load_image('projectiles/bullet.png'),
+            'bone': load_image('projectiles/bone.png'),
         }
 
         self.sfx = {
@@ -52,18 +54,20 @@ class Game:
             'hit': pygame.mixer.Sound('data/sfx/hit.wav'),
             'shoot': pygame.mixer.Sound('data/sfx/shoot.wav'),
             'ambience': pygame.mixer.Sound('data/sfx/ambience.wav'),
+            'throw': pygame.mixer.Sound('data/sfx/throw.wav')
         }
 
-        self.sfx['ambience'].set_volume(0.2)
+        self.sfx['ambience'].set_volume(0.3)
         self.sfx['shoot'].set_volume(0.4)
         self.sfx['hit'].set_volume(0.8)
         self.sfx['dash'].set_volume(0.3)
-        self.sfx['jump'].set_volume(0.7)
+        self.sfx['jump'].set_volume(.5)
 
         self.clouds = Clouds(self.assets['clouds'], count=16)
 
         self.player = Player(self, (50, 50), (8,15))
-
+        self.floating_texts= []
+        self.txtscore = self.font.render(str(self.player.score), True, (255,255,255))
         self.tilemap = Tilemap(self, tile_size=16)
 
         self.level = 0
@@ -91,13 +95,52 @@ class Game:
             else:
                 self.enemies.append(Enemy(self, spawner['pos'], (8,15)))
 
-        self.projectiles = []
+        self.projectiles = [] # enemy projectiles
+        self.hero_projectiles =[] # ziggy projectiles
         self.particles = []
         self.sparks = []
 
         self.scroll = [0,0] # coordinates are top left of screen
         self.dead = 0
         self.transition = -30
+        self.angle = 0
+        self.random_background = random.randint(0, len(os.listdir('data/images/backgrounds'))-1) # cycles between different backgrounds in game
+
+    def update(self, input_data):
+        if(input_data == 'up'):
+            if self.player.jump():
+                self.sfx['shoot'].play()
+        if(input_data == 'left'):
+            self.movement[0] = True
+        if(input_data == 'right'):
+            self.movement[1] = True
+        if(input_data == 'x'):
+            self.player.dash()
+        if(input_data == 'l_false'):
+            self.movement[0] = False
+        if(input_data == 'r_false'):
+            self.movement[1] = False
+
+    def server_thread(self):
+        host = socket.gethostbyname(socket.gethostname())
+        port = 5000
+        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server_socket.bind((host, port))
+        server_socket.listen(1)
+        print(f"Server enabled on {host}:{port}")
+
+        conn, addr = server_socket.accept()
+        print(f"Connection from: {addr}")
+        while True:
+            data = conn.recv(1024).decode()
+            if not data:
+                break
+            self.update(data)
+            print("from connected user: " + str(data))
+        
+        conn.close()
+        server_socket.close()
+        print("Server closed")
 
     def update(self, input_data):
         if(input_data == 'up'):
@@ -137,15 +180,35 @@ class Game:
 
     def run(self):
         pygame.mixer.music.load('data/music.wav') # wav files seems to be better with executables
-        pygame.mixer.music.set_volume(0.5)
+        pygame.mixer.music.set_volume(0.25)
         pygame.mixer.music.play(-1) # takes a number of loops, -1 loops forever
 
         self.sfx['ambience'].play(-1)
 
         while True:
             self.display.fill((0, 0, 0, 0))
-            self.display_2.blit(self.assets['background'], (0,0))
+            self.display_2.blit(self.assets['background'][self.random_background], (0,0)) 
 
+            # Render the Score and outline
+            
+            outline_color = (0, 0, 0)  # Black color for the outline
+            main_color = (255, 255, 255)  # White color for the main text
+
+            outline_positions = [
+                (-1, -1), (0, -1), (1, -1),  # Top-left, Top, Top-right
+                (-1, 0),          (1, 0),   # Left, Right
+                (-1, 1), (0, 1), (1, 1)    # Bottom-left, Bottom, Bottom-right
+            ]
+
+            # Render the black outline
+            for offset in outline_positions:
+                outline_surface = self.font.render(f"{self.player.score:06}", True, outline_color)
+                self.display_2.blit(outline_surface, (10 + offset[0], 5 + offset[1]))
+
+            # Render the main text
+            self.txtscore = self.font.render(f"{self.player.score:06}", True, main_color)
+            self.display_2.blit(self.txtscore, (10, 5))
+            self.display_2.blit(self.txtscore, (10, 5))  # Position it at the top-left corner of the display
             self.screenshake = max(0, self.screenshake - 1)
 
             if not len(self.enemies):
@@ -179,11 +242,25 @@ class Game:
 
             self.tilemap.render(self.display, offset=render_scroll)
 
+            # Update floating texts
+            for text in self.floating_texts[:]:
+                if not text.update():  # If text has expired
+                    self.floating_texts.remove(text)
+                if not len(self.enemies):
+                    self.floating_texts.remove(text) 
+
+            # Render floating texts
+            for text in self.floating_texts:
+                text.render(self.display_2)
             for enemy in self.enemies.copy():
                 kill = enemy.update(self.tilemap, (0,0))
                 enemy.render(self.display, offset=render_scroll)
                 if kill:
                     self.enemies.remove(enemy)
+                    self.player.score+=100
+                    #enemy_x, enemy_y = enemy.position  # Get enemy's position
+                    self.floating_texts.append(FloatingText((self.player.pos[0] - self.scroll[0]) - 5, (self.player.pos[1] - self.scroll[1]) - 15, "+100")) #This no work it spawns up in the sky
+                    #print(self.player.score)
 
             if self.dead <= 2:
                 self.player.update(self.tilemap, (self.movement[1] - self.movement[0], 0))
@@ -193,7 +270,7 @@ class Game:
             for projectile in self.projectiles.copy(): # have to copy if removing from list otherwise runtime error
                 projectile[0][0] += projectile[1] # adding direction to projectile
                 projectile[2] += 1
-                img = self.assets['projectile']
+                img = self.assets['bullet']
                 self.display.blit(img, (projectile[0][0] - img.get_width() / 2 - render_scroll[0], projectile[0][1] - img.get_height() / 2 - render_scroll[1])) # half of width centers it in respect to rendering
                 if self.tilemap.solid_check(projectile[0]): # checking location of projectile
                     self.projectiles.remove(projectile)
@@ -212,6 +289,24 @@ class Game:
                             speed = random.random() * 5
                             self.sparks.append(Spark(self.player.rect().center, angle, 2 + random.random()))
                             self.particles.append(Particle(self, 'particle', self.player.rect().center, velocity=[math.cos(angle + math.pi) * speed * 0.5, math.sin(angle + math.pi) * speed * 0.5], frame=random.randint(0, 7)))
+            
+            self.angle += 2
+            self.angle %= 360
+
+            #[[x, y], direction, timer]
+            # tells when the hero projectiles need to be removed from the screen
+            for projectile in self.hero_projectiles.copy(): # have to copy if removing from list otherwise runtime error
+                projectile[0][0] += projectile[1] # adding direction to projectile
+                projectile[2] += 1
+                img = self.assets['bone']
+                img = pygame.transform.rotate(img, self.angle)
+                self.display.blit(img, (projectile[0][0] - img.get_width() / 2 - render_scroll[0], projectile[0][1] - img.get_height() / 2 - render_scroll[1])) # half of width centers it in respect to rendering
+                if self.tilemap.solid_check(projectile[0]): # checking location of projectile
+                    self.hero_projectiles.remove(projectile)
+                    for i in range(4):
+                        self.sparks.append(Spark(projectile[0], random.random() - 0.5 + (math.pi if projectile[1] > 0 else 0), 2 + random.random())) # shoot sparks left only if projectile is going right
+                elif projectile[2] > 360:
+                    self.hero_projectiles.remove(projectile)
 
             for spark in self.sparks.copy():
                 kill = spark.update()
