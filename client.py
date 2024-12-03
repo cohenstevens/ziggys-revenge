@@ -4,7 +4,7 @@ import time
 
 def client_program():
     print("Trying to connect to server")
-    host = "10.22.32.214"
+    host = "192.168.1.74"
     port = 5000
 
     client_socket = socket.socket()
