@@ -21,6 +21,7 @@ class Editor:
             'large_decor': load_images('tiles/large_decor'),
             'stone': load_images('tiles/stone'),
             'spawners': load_images('tiles/spawners'),
+            'torii': load_images('tiles/torii_gates'),
         }
 
         
@@ -62,11 +63,7 @@ class Editor:
 
             self.tilemap.render(self.display, offset=render_scroll)
 
-            try:
-                current_tile_img = self.assets[self.tile_list[self.tile_group]][self.tile_variant].copy()
-            except:
-                print("Out of range")
-                self.tile_variant = 0
+            current_tile_img = self.assets[self.tile_list[self.tile_group]][self.tile_variant].copy()
             current_tile_img.set_alpha(100) # sets image transparency, 0 is full transparent, 255 is max
 
             mpos = pygame.mouse.get_pos() # gets pixels coordinates cooresponding to the window size
@@ -104,7 +101,7 @@ class Editor:
                     self.screen = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
                 
 
-                if event.type == pygame.MOUSEBUTTONDOWN: # event type   
+                if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
                         self.clicking = True
                         if not self.ongrid:
@@ -112,15 +109,18 @@ class Editor:
                     if event.button == 3:
                         self.right_clicking = True
                     if self.shift:
-                        if event.button == 4:
-                            self.tile_variant = (self.tile_variant - 1) % len(self.assets[self.tile_list[self.tile_group]]) # gives number of variant
-                        if event.button == 5:
+                        if event.button == 4:  # Scroll up
+                            self.tile_variant = (self.tile_variant - 1) % len(self.assets[self.tile_list[self.tile_group]])
+                        if event.button == 5:  # Scroll down
                             self.tile_variant = (self.tile_variant + 1) % len(self.assets[self.tile_list[self.tile_group]])
                     else:
                         if event.button == 4:
-                            self.tile_group = (self.tile_group - 1) % len(self.tile_list) # forces index to be in the bounds of what you select
+                            self.tile_group = (self.tile_group - 1) % len(self.tile_list)
+                            self.tile_variant = 0  # Reset to first variant when changing tile group
                         if event.button == 5:
                             self.tile_group = (self.tile_group + 1) % len(self.tile_list)
+                            self.tile_variant = 0  # Reset to first variant when changing tile group
+
 
                 if event.type == pygame.MOUSEBUTTONUP:
                     if event.button == 1:

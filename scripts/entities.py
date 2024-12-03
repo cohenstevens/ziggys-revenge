@@ -94,17 +94,18 @@ class Enemy(PhysicsEntity):
             self.walking = max(0, self.walking - 1)
             if not self.walking:
                 dis = (self.game.player.pos[0] - self.pos[0], self.game.player.pos[1] - self.pos[1]) # difference between player and enemy pos
-                if (abs(dis[1] < 16)): # if they are less than 16 pixels away on the y-axis
-                    if (self.flip and dis[0] < 0): # if looking left and player is left
-                        self.game.sfx['shoot'].play()
-                        self.game.projectiles.append([[self.rect().centerx - 7, self.rect().centery], -1.5, 0])
-                        for i in range(4):
-                            self.game.sparks.append(Spark(self.game.projectiles[-1][0], random.random() - 0.5 + math.pi, 2 + random.random())) # self.projectiles[-1][0] -1 is last projectile shot # + math.pi makes it face left
-                    if (not self.flip and dis[0] > 0):
-                        self.game.sfx['shoot'].play()
-                        self.game.projectiles.append([[self.rect().centerx + 7, self.rect().centery], 1.5, 0])
-                        for i in range(4):
-                            self.game.sparks.append(Spark(self.game.projectiles[-1][0], random.random() - 0.5, 2 + random.random())) 
+                if abs(dis[0]) < 200: # if enemies are more than 200 pixels away they wont shoot
+                    if (abs(dis[1] < 16)): # if they are less than 16 pixels away on the y-axis
+                        if (self.flip and dis[0] < 0): # if looking left and player is left
+                            self.game.sfx['shoot'].play()
+                            self.game.projectiles.append([[self.rect().centerx - 7, self.rect().centery], -1.5, 0])
+                            for i in range(4):
+                                self.game.sparks.append(Spark(self.game.projectiles[-1][0], random.random() - 0.5 + math.pi, 2 + random.random())) # self.projectiles[-1][0] -1 is last projectile shot # + math.pi makes it face left
+                        if (not self.flip and dis[0] > 0):
+                            self.game.sfx['shoot'].play()
+                            self.game.projectiles.append([[self.rect().centerx + 7, self.rect().centery], 1.5, 0])
+                            for i in range(4):
+                                self.game.sparks.append(Spark(self.game.projectiles[-1][0], random.random() - 0.5, 2 + random.random())) 
 
         elif random.random() < 0.01:
             self.walking = random.randint(30, 120) # random number to decide how many frames the enemy will continue to walk for 30-120
