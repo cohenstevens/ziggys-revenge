@@ -10,7 +10,8 @@ from scripts.clouds import Clouds
 from scripts.particle import Particle
 from scripts.spark import Spark
 from scripts.FloatText import FloatingText
-
+import threading
+import socket
 
 class Game:
     def __init__(self):
@@ -105,6 +106,45 @@ class Game:
         self.transition = -30
         self.angle = 0
         self.random_background = random.randint(0, len(os.listdir('data/images/backgrounds'))-1) # cycles between different backgrounds in game
+
+    def update(self, input_data):
+        if(input_data == 'up'):
+            if self.player.jump():
+                self.sfx['jump'].play()
+        if(input_data == 'left'):
+            self.movement[0] = True
+        if(input_data == 'right'):
+            self.movement[1] = True
+        if(input_data == 'x'):
+            self.player.dash()
+        if(input_data == 'space'):
+            self.player.throw()
+        if(input_data == 'l_false'):
+            self.movement[0] = False
+        if(input_data == 'r_false'):
+            self.movement[1] = False
+        
+
+    def server_thread(self):
+        host = socket.gethostbyname(socket.gethostname())
+        port = 5000
+        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server_socket.bind((host, port))
+        server_socket.listen(1)
+        print(f"Server enabled on {host}:{port}")
+
+        conn, addr = server_socket.accept()
+        print(f"Connection from: {addr}")
+        while True:
+            data = conn.recv(1024).decode()
+            if not data:
+                break
+            self.update(data)
+            print("from connected user: " + str(data))
+        
+        conn.close()
+        server_socket.close()
+        print("Server closed")
 
     def run(self):
         pygame.mixer.music.load('data/music.wav') # wav files seems to be better with executables
@@ -263,23 +303,21 @@ class Game:
                     sys.exit()
                 elif event.type == pygame.VIDEORESIZE:
                     self.screen = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_LEFT:
-                        self.movement[0] = True
-                    if event.key == pygame.K_RIGHT:
-                        self.movement[1] = True
-                    if event.key == pygame.K_UP:
-                        if self.player.jump():
-                            self.sfx['jump'].play()
-                    if event.key == pygame.K_x:  #self.player.velocity[1] = -3 # adds a smooth jump cause velo is 'backwards'
-                        self.player.dash()
-                    if event.key == pygame.K_SPACE:
-                        self.player.throw()
-                if event.type == pygame.KEYUP:
-                    if event.key == pygame.K_LEFT:
-                        self.movement[0] = False
-                    if event.key == pygame.K_RIGHT:
-                        self.movement[1] = False
+            #     if event.type == pygame.KEYDOWN:
+            #         if event.key == pygame.K_LEFT:
+            #             self.movement[0] = True
+            #         if event.key == pygame.K_RIGHT:
+            #             self.movement[1] = True
+            #         if event.key == pygame.K_UP:
+            #             if self.player.jump():
+            #                 self.sfx['shoot'].play()
+            #         if event.key == pygame.K_x:  #self.player.velocity[1] = -3 # adds a smooth jump cause velo is 'backwards'
+            #             self.player.dash()
+            #     if event.type == pygame.KEYUP:
+            #         if event.key == pygame.K_LEFT:
+            #             self.movement[0] = False
+            #         if event.key == pygame.K_RIGHT:
+            #             self.movement[1] = False
 
             if self.transition:
                 transition_surf = pygame.Surface(self.display.get_size()) # creates black surface the size of display
@@ -297,7 +335,18 @@ class Game:
             pygame.display.update()
             self.clock.tick(60) #  makes game run at 60 fps
 
-Game().run()
+
+if __name__ == '__main__':
+    game = Game()
+    server_thread = threading.Thread(target=game.server_thread)
+    server_thread.start()
+    try:
+        game.run()
+    except KeyboardInterrupt:
+        print("Game interrupted")
+    finally:
+        server_thread.join()
+        print("Game and server shutdown")
 
 # for executable PyInstaller game.py --noconsole -- onefile
 # game.py bc its main executable, noconsole so that the client doesnt see the console, and one file for 1 file
