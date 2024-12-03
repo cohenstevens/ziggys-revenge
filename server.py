@@ -71,7 +71,7 @@ class Game:
         self.txtscore = self.font.render(str(self.player.score), True, (255,255,255))
         self.tilemap = Tilemap(self, tile_size=16)
 
-        self.level = 4
+        self.level = 0
         self.load_level(self.level)
 
         self.screenshake = 0
