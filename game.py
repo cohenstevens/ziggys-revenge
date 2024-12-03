@@ -33,6 +33,7 @@ class Game:
             'player': load_image('entities/player.png'),
             'background': load_images('backgrounds'),
             'clouds': load_images('clouds'),
+            'torii': load_images('tiles/torii_gates'),
             'enemy/idle': Animation(load_images('entities/enemy/idle'), img_dur=6),
             'enemy/run': Animation(load_images('entities/enemy/run'), img_dur=4),
             'player/idle': Animation(load_images('entities/player/idle'), img_dur=6),
@@ -69,7 +70,7 @@ class Game:
         self.txtscore = self.font.render(str(self.player.score), True, (255,255,255))
         self.tilemap = Tilemap(self, tile_size=16)
 
-        self.level = 0
+        self.level = 4
         self.load_level(self.level)
 
         self.screenshake = 0
@@ -78,7 +79,7 @@ class Game:
     def load_level(self, map_id):
         self.tilemap.load('data/maps/' + str(map_id) + '.json')
 
-        tree_type_numbers = [3, 4, 5]
+        tree_type_numbers = [3, 4, 5, 8] # 8 bc jungle torii gate needs leaves falling from it
 
         self.leaf_spawner = []
         for number in tree_type_numbers:
