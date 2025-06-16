@@ -54,14 +54,18 @@ class Game:
             'hit': pygame.mixer.Sound('data/sfx/hit.wav'),
             'shoot': pygame.mixer.Sound('data/sfx/shoot.wav'),
             'ambience': pygame.mixer.Sound('data/sfx/ambience.wav'),
-            'throw': pygame.mixer.Sound('data/sfx/throw.wav')
+            'throw': pygame.mixer.Sound('data/sfx/throw.wav'),
+            'deflect': pygame.mixer.Sound('data/sfx/slice.wav'),
         }
 
         self.sfx['ambience'].set_volume(0.3)
-        self.sfx['shoot'].set_volume(0.4)
+        self.sfx['shoot'].set_volume(0.7)
         self.sfx['hit'].set_volume(0.8)
         self.sfx['dash'].set_volume(0.3)
         self.sfx['jump'].set_volume(.5)
+        self.sfx['throw'].set_volume(.5)
+        self.sfx['deflect'].set_volume(.4)
+
 
         self.clouds = Clouds(self.assets['clouds'], count=16)
 
@@ -74,6 +78,64 @@ class Game:
         self.load_level(self.level)
 
         self.screenshake = 0
+
+    def main_menu(self):
+        menu_options = ["Start Game", "Quit"]
+
+        while True:
+            self.screen.fill((0, 0, 0))  # Black background
+
+            # Get current screen size for dynamic scaling
+            screen_width, screen_height = self.screen.get_size()
+            title_font_size = screen_height // 10
+            option_font_size = screen_height // 18
+
+            title_font = pygame.font.SysFont("Arial", title_font_size)
+            option_font = pygame.font.SysFont("Arial", option_font_size)
+
+            # Render title
+            title_text = title_font.render("Ziggy's Revenge", True, (255, 255, 255))
+            self.screen.blit(title_text, ((screen_width - title_text.get_width()) // 2, screen_height // 6))
+
+            mouse_pos = pygame.mouse.get_pos()
+            click = False
+
+            # Check for mouse events
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    click = True
+                elif event.type == pygame.VIDEORESIZE:
+                    self.screen = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
+
+            # Draw options and check hover/click
+            button_height = option_font_size + 10
+            spacing = 20
+            start_y = screen_height // 2
+            clicked_option = None
+
+            for i, option in enumerate(menu_options):
+                text_surface = option_font.render(option, True, (255, 255, 255))
+                text_rect = text_surface.get_rect(center=(screen_width // 2, start_y + i * (button_height + spacing)))
+
+                # Hover effect
+                if text_rect.collidepoint(mouse_pos):
+                    text_surface = option_font.render(option, True, (255, 255, 0))
+                    if click:
+                        clicked_option = option
+
+                self.screen.blit(text_surface, text_rect.topleft)
+
+            pygame.display.update()
+
+            # Handle selection
+            if clicked_option == "Start Game":
+                return
+            elif clicked_option == "Quit":
+                pygame.quit()
+                sys.exit()
 
 
     def load_level(self, map_id):
@@ -110,6 +172,8 @@ class Game:
         pygame.mixer.music.load('data/music.wav') # wav files seems to be better with executables
         pygame.mixer.music.set_volume(0.25)
         pygame.mixer.music.play(-1) # takes a number of loops, -1 loops forever
+
+        self.main_menu()
 
         self.sfx['ambience'].play(-1)
 
@@ -275,6 +339,8 @@ class Game:
                         self.player.dash()
                     if event.key == pygame.K_SPACE:
                         self.player.throw()
+                    if event.key == pygame.K_f:
+                        self.player.start_deflect()
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_LEFT:
                         self.movement[0] = False

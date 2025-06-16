@@ -159,15 +159,22 @@ class Enemy(PhysicsEntity):
 class Player(PhysicsEntity):
     def __init__(self, game, pos, size):
         super().__init__(game, 'player', pos, size) # calls default constructor
-        self.air_time = 0
+        self.air_time = 0 # how long you've been in teh air for
         self.jumps = 2
-        self.wall_slide = False
+        self.wall_slide = False # if you're currently wall sliding
         self.dashing = 0
         self.bones = 0
         self.score = 0
+        self.deflecting = 0
+        self.DEFLECT_COOLDOWN = 5000
+        self.last_deflect_time = -self.DEFLECT_COOLDOWN # immediate use on game start
 
     def update(self, tilemap, movement=(0,0)):
         super().update(tilemap, movement=movement)
+
+        if self.deflecting > 0:
+            self.deflecting = max(0, self.deflecting - 1)
+            self.deflect()
 
         self.air_time += 1
 
@@ -190,7 +197,11 @@ class Player(PhysicsEntity):
                 self.flip = True
             self.set_action('wall_slide')
 
-# deals with animation
+        #print(self.pos[0], self.pos[1])
+        #print("Player pos:", self.pos)
+        #print("Projectile pos:", [proj[0] for proj in self.game.projectiles[:3]])
+
+        # deals with animation
         if not self.wall_slide:
             if self.air_time > 4:
                 self.set_action('jump') # dont want running animation to be playing while jumping so you put first in if statement
@@ -257,15 +268,55 @@ class Player(PhysicsEntity):
 
     def throw(self):
         if self.bones > 0:
-            if (self.flip): # if looking left and player is left
+            if self.flip: # if looking left and player is left
                 self.bones -= 1
                 self.game.sfx['throw'].play()
                 self.game.hero_projectiles.append([[self.rect().centerx - 7, self.rect().centery], -1.5, 0])
                 for i in range(4):
                     self.game.sparks.append(Spark(self.game.hero_projectiles[-1][0], random.random() - 0.5 + math.pi, 2 + random.random())) # self.projectiles[-1][0] -1 is last projectile shot # + math.pi makes it face left
-            if (not self.flip):
+            if not self.flip:
                 self.bones -= 1
                 self.game.sfx['throw'].play()
                 self.game.hero_projectiles.append([[self.rect().centerx + 7, self.rect().centery], 1.5, 0])
                 for i in range(4):
                     self.game.sparks.append(Spark(self.game.hero_projectiles[-1][0], random.random() - 0.5, 2 + random.random())) 
+
+    def start_deflect(self):
+        # initiates the deflection state
+        current_time = pygame.time.get_ticks()
+        if self.deflecting == 0 and (current_time - self.last_deflect_time >= self.DEFLECT_COOLDOWN):
+            self.deflecting = 15  
+            self.last_deflect_time = current_time
+            self.game.sfx['deflect'].play() 
+            # self.set_action('deflect') 
+
+    def deflect(self):
+        deflection_range_x = 20 
+        deflection_range_y = 16
+
+        for projectile in self.game.projectiles.copy():
+            distance_x = projectile[0][0] - self.rect().centerx
+            distance_y = projectile[0][1] - self.rect().centery
+
+            # Check if the projectile is within the vertical range.
+            if abs(distance_y) < deflection_range_y:
+                if self.flip and (-deflection_range_x < distance_x < 0):
+                    self.game.projectiles.remove(projectile)
+                    # self.game.sfx['hit'].play() 
+                    # for i in range(5):
+                    #     self.game.sparks.append(Spark(projectile[0], random.random() - 0.5 + math.pi, 2 + random.random()))
+                    return # Stop after deflecting one projectile per frame
+
+                # If player is facing right (self.flip == False)
+                if not self.flip and (0 < distance_x < deflection_range_x):
+                    self.game.projectiles.remove(projectile)
+                    # self.game.sfx['hit'].play()
+                    # for i in range(5):
+                    #     self.game.sparks.append(Spark(projectile[0], random.random() - 0.5, 2 + random.random()))
+                    return
+
+
+
+
+
+

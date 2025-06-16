@@ -36,3 +36,21 @@ While I have no future plans of working on this game full time, I would like to 
     R - Rotate Tile
     Shift + Scroll - Change Variant
     Scroll - Change Tile Group
+
+## **To Add**
+    - Block/Slice mechanic where ziggy can slice a bullet in half
+    - Make bullets faster
+    - Instead of bullets make them darts
+    - Enemies are people from the pound or something like that. trying to take her away
+    - Make 1-2 enemies
+    - Redo enemy texture
+    - Candy Land is a bonus level after you beat the others
+    - 3 lives and you reset when you die
+    - 10 Levels
+    - 11 level is candy land where she dreams of food
+    - 
+    -
+    - Demon Sword is cool enemy
+    - Maybe someone catches me on the 9th level and on the 10th i travel through a dungeon to fight a boss
+    - You're trying to rescue Aspen from the final boss or rescue her at beginning of 10th level so cat sprite can follow behind
+    - Frog is NPC maybe giving a tutorial
